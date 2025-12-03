@@ -4,6 +4,25 @@ import { logger } from '../utils/logger.js';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
+
+// Helper function to call the generative AI and handle responses
+const callGenerativeAI = async (res, prompt, responseKey) => {
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+
+    const jsonResponse = { [responseKey]: text };
+    if (responseKey === 'content') {
+      jsonResponse.promptUsed = prompt;
+    }
+    res.json(jsonResponse);
+  } catch (error) {
+    logger.error(`Error in AI generation: ${error.message}`);
+    res.status(500).json({ message: 'AI generation error', error: error.message });
+  }
+};
 
 // @desc    Generate content using Gemini AI
 // @route   POST /api/ai/generate
@@ -20,19 +39,10 @@ export const generateContent = async (req, res) => {
     // Enhanced prompt with context
     const enhancedPrompt = generateEnhancedPrompt(prompt, language, level, contextType);
 
-    // Generate content with Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(enhancedPrompt);
-    const response = result.response;
-    const text = response.text();
-
-    res.json({ 
-      content: text,
-      promptUsed: enhancedPrompt
-    });
-  } catch (error) {
-    logger.error(`Error in generateContent: ${error.message}`);
-    res.status(500).json({ message: 'AI generation error', error: error.message });
+    await callGenerativeAI(res, enhancedPrompt, 'content');
+  } catch (error) { // Catches errors from outside the AI call, e.g., in generateEnhancedPrompt
+    logger.error(`Error in generateContent setup: ${error.message}`);
+    res.status(500).json({ message: 'Error setting up AI prompt', error: error.message });
   }
 };
 
@@ -64,18 +74,10 @@ export const generateConversation = async (req, res) => {
       Their message: "${userMessage}"
     `;
 
-    // Generate content with Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(conversationPrompt);
-    const response = result.response;
-    const text = response.text();
-
-    res.json({ 
-      conversation: text
-    });
+    await callGenerativeAI(res, conversationPrompt, 'conversation');
   } catch (error) {
-    logger.error(`Error in generateConversation: ${error.message}`);
-    res.status(500).json({ message: 'AI conversation error', error: error.message });
+    logger.error(`Error in generateConversation setup: ${error.message}`);
+    res.status(500).json({ message: 'Error setting up AI prompt', error: error.message });
   }
 };
 
@@ -107,18 +109,10 @@ export const generateFeedback = async (req, res) => {
       The ${contentType}: "${content}"
     `;
 
-    // Generate content with Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(feedbackPrompt);
-    const response = result.response;
-    const text = response.text();
-
-    res.json({ 
-      feedback: text
-    });
+    await callGenerativeAI(res, feedbackPrompt, 'feedback');
   } catch (error) {
-    logger.error(`Error in generateFeedback: ${error.message}`);
-    res.status(500).json({ message: 'AI feedback error', error: error.message });
+    logger.error(`Error in generateFeedback setup: ${error.message}`);
+    res.status(500).json({ message: 'Error setting up AI prompt', error: error.message });
   }
 };
 
@@ -151,18 +145,10 @@ export const generateAssessment = async (req, res) => {
       Format everything clearly with sections and numbering.
     `;
 
-    // Generate content with Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(assessmentPrompt);
-    const response = result.response;
-    const text = response.text();
-
-    res.json({ 
-      assessment: text
-    });
+    await callGenerativeAI(res, assessmentPrompt, 'assessment');
   } catch (error) {
-    logger.error(`Error in generateAssessment: ${error.message}`);
-    res.status(500).json({ message: 'AI assessment error', error: error.message });
+    logger.error(`Error in generateAssessment setup: ${error.message}`);
+    res.status(500).json({ message: 'Error setting up AI prompt', error: a.message });
   }
 };
 
